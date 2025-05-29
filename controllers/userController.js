@@ -21,56 +21,68 @@ exports.signUp = async (req, res) => {
 };
 
 exports.signIn = async (req, res) => {
-    const { username, password } = req.body;
+    const { name, password } = req.body;
 
-    const user = await prisma.user.findFirst({
-        where: { name: username },
-    });
+    try {
+        const user = await prisma.user.findFirst({
+            where: { name: name },
+        });
 
-    if (!user) {
-        res.staus(500).json({ success: false, error: "User not found" });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-        return res
-            .status(500)
-            .json({ success: false, error: "Incorrect password" });
-    }
-
-    jwt.sign(
-        { id: user.id, name: user.name },
-        process.env.JWT_SECRET,
-        { expiresIn: "24h" },
-        (err, token) => {
-            if (err) {
-                res.staus(500).json({
-                    success: false,
-                    error: err,
-                });
-            }
-            res.status(200).json({
-                success: true,
-                message: "Log in successful",
-                token: token,
-            });
+        if (!user) {
+            return res
+                .status(404)
+                .json({ success: false, error: "User not found" });
         }
-    );
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res
+                .status(401)
+                .json({ success: false, error: "Incorrect password" });
+        }
+
+        const token = jwt.sign(
+            { id: user.id, name: user.name },
+            process.env.JWT_SECRET,
+            { expiresIn: "1h" }
+        );
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "Lax",
+            maxAge: 60 * 60 * 1000,
+        });
+
+        return res.json({
+            success: true,
+            message: "Signed in successfully",
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            error: "Internal server error",
+        });
+    }
 };
 
 exports.userData = (req, res) => {
-    jwt.verify(req.token, process.env.JWT_SECRET, (err, authorizedData) => {
-        if (err) {
-            res.status(403).json({
-                success: false,
-                error: "Could not connect to the protected route",
-            });
-        } else {
-            res.json({
-                success: true,
-                message: "Authenticated user",
-                data: authorizedData,
-            });
+    jwt.verify(
+        req.cookies.token,
+        process.env.JWT_SECRET,
+        (err, authorizedData) => {
+            if (err) {
+                res.status(403).json({
+                    success: false,
+                    error: "Could not connect to the protected route",
+                });
+            } else {
+                res.json({
+                    success: true,
+                    message: "Authenticated user",
+                    data: authorizedData,
+                });
+            }
         }
-    });
+    );
 };
