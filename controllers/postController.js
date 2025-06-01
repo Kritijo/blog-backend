@@ -2,13 +2,21 @@ const prisma = require("../config/prisma");
 
 exports.getAllPosts = async (req, res) => {
     try {
-        const posts = await prisma.post.findMany({
-            orderBy: { createdAt: "desc" },
-        });
-        res.status(200).json({ success: true, data: posts });
+        const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
+        const skip = parseInt(req.query.skip) || 0;
+
+        const [posts, total] = await Promise.all([
+            prisma.post.findMany({
+                orderBy: { createdAt: "desc" },
+                skip,
+                take: limit,
+            }),
+            prisma.post.count(),
+        ]);
+
+        res.json({ posts, total });
     } catch (error) {
         res.status(500).json({
-            success: false,
             error: "Error fetching posts.",
         });
     }
@@ -22,10 +30,9 @@ exports.getPost = async (req, res) => {
                 id,
             },
         });
-        res.status(200).json({ success: true, data: post });
+        res.json({ post });
     } catch (error) {
         res.status(500).json({
-            success: false,
             error: "Error fetching post",
         });
     }

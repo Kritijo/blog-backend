@@ -14,9 +14,9 @@ exports.signUp = async (req, res) => {
                 password: hashedPassword,
             },
         });
-        res.status(200).json({ success: true, message: "User created!" });
+        res.json({ message: "User created!" });
     } catch (err) {
-        res.staus(500).json({ success: false, error: "Something went wrong" });
+        res.staus(500).json({ error: "Something went wrong" });
     }
 };
 
@@ -29,16 +29,12 @@ exports.signIn = async (req, res) => {
         });
 
         if (!user) {
-            return res
-                .status(404)
-                .json({ success: false, error: "User not found" });
+            return res.status(404).json({ error: "User not found" });
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            return res
-                .status(401)
-                .json({ success: false, error: "Incorrect password" });
+            return res.status(401).json({ error: "Incorrect password" });
         }
 
         const token = jwt.sign(
@@ -53,7 +49,6 @@ exports.signIn = async (req, res) => {
         });
 
         return res.json({
-            success: true,
             message: "Signed in successfully",
         });
     } catch (err) {
@@ -70,7 +65,7 @@ exports.signOut = (req, res) => {
         secure: process.env.NODE_ENV === "production",
         sameSite: "Strict",
     });
-    res.status(200).json({ message: "Logged out" });
+    res.json({ message: "Logged out" });
 };
 
 exports.userData = (req, res) => {
@@ -80,14 +75,11 @@ exports.userData = (req, res) => {
         (err, authorizedData) => {
             if (err) {
                 res.status(403).json({
-                    success: false,
                     error: "Could not connect to the protected route",
                 });
             } else {
                 res.json({
-                    success: true,
-                    message: "Authenticated user",
-                    data: authorizedData,
+                    authorizedData,
                 });
             }
         }

@@ -3,19 +3,27 @@ const prisma = require("../config/prisma");
 exports.getUserPosts = async (req, res) => {
     const id = parseInt(req.user.id);
     try {
-        const userPosts = await prisma.user.findUnique({
-            where: { id },
-            include: {
-                posts: true,
-            },
-        });
+        const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
+        const skip = parseInt(req.query.skip) || 0;
+
+        const [userPosts, total] = await Promise.all([
+            prisma.post.findMany({
+                where: { authorId: id },
+                orderBy: { createdAt: "desc" },
+                skip,
+                take: limit,
+            }),
+            prisma.post.count({
+                where: { authorId: id },
+            }),
+        ]);
+
         res.json({
-            success: true,
-            data: userPosts.posts,
+            userPosts,
+            total,
         });
     } catch (err) {
         res.json({
-            success: false,
             error: "Cannot get blogs",
         });
     }
@@ -34,10 +42,9 @@ exports.createPost = async (req, res) => {
             },
         });
 
-        res.status(201).json({ success: true, message: "Post created" });
+        res.status(201).json({ message: "Post created" });
     } catch (error) {
         res.status(500).json({
-            success: false,
             error: "Could not create post.",
         });
     }
@@ -55,7 +62,6 @@ exports.editPost = async (req, res) => {
 
         if (!existingPost || existingPost.authorId !== userId) {
             return res.status(403).json({
-                success: false,
                 error: "You are not authorized to edit this post.",
             });
         }
@@ -66,12 +72,10 @@ exports.editPost = async (req, res) => {
         });
 
         res.json({
-            success: true,
-            data: updatedPost,
+            updatedPost,
         });
     } catch (error) {
         res.status(500).json({
-            success: false,
             error: "Could not edit post.",
         });
     }
@@ -88,7 +92,6 @@ exports.deletePost = async (req, res) => {
 
         if (!existingPost || existingPost.authorId !== userId) {
             return res.status(403).json({
-                success: false,
                 error: "You are not authorized to delete this post.",
             });
         }
@@ -98,12 +101,10 @@ exports.deletePost = async (req, res) => {
         });
 
         res.json({
-            success: true,
             message: "Post deleted",
         });
     } catch (error) {
         res.status(500).json({
-            success: false,
             error: "Could not delete post.",
         });
     }
