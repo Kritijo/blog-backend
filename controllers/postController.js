@@ -26,10 +26,17 @@ exports.getPost = async (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const post = await prisma.post.findUnique({
-            where: {
-                id,
+            where: { id },
+            include: {
+                author: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
             },
         });
+
         res.json({ post });
     } catch (error) {
         res.status(500).json({
