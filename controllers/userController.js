@@ -43,15 +43,13 @@ exports.signIn = async (req, res) => {
 
         const token = jwt.sign(
             { id: user.id, name: user.name },
-            process.env.JWT_SECRET,
-            { expiresIn: "1h" }
+            process.env.JWT_SECRET
         );
 
         res.cookie("token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "Lax",
-            maxAge: 60 * 60 * 1000,
         });
 
         return res.json({
@@ -64,6 +62,15 @@ exports.signIn = async (req, res) => {
             error: "Internal server error",
         });
     }
+};
+
+exports.signOut = (req, res) => {
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Strict",
+    });
+    res.status(200).json({ message: "Logged out" });
 };
 
 exports.userData = (req, res) => {

@@ -6,6 +6,7 @@ const userAuth = Router();
 
 userAuth.post("/signin", user.signIn);
 userAuth.post("/signup", user.signUp);
+userAuth.post("/signout", user.signOut);
 userAuth.get("/data", checkToken, user.userData);
 
 module.exports = userAuth;
