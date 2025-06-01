@@ -8,7 +8,7 @@ const userAuth = require("./routes/userRoute");
 const cookieParser = require("cookie-parser");
 
 const app = express();
-const port = 3000;
+const port = 3000 || process.env.PORT;
 
 app.use(cookieParser());
 
