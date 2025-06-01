@@ -21,11 +21,11 @@ exports.signUp = async (req, res) => {
 };
 
 exports.signIn = async (req, res) => {
-    const { name, password } = req.body;
+    const { email, password } = req.body;
 
     try {
         const user = await prisma.user.findFirst({
-            where: { name: name },
+            where: { email: email },
         });
 
         if (!user) {
