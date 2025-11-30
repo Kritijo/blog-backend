@@ -33,11 +33,13 @@ exports.createPost = async (req, res) => {
     try {
         const { title, content } = req.body;
         const authorId = parseInt(req.user.id);
+        const thumbnail = req.body.thumbnail || null;
 
         await prisma.post.create({
             data: {
                 title,
                 content,
+                thumbnail,
                 authorId,
             },
         });
@@ -55,6 +57,8 @@ exports.editPost = async (req, res) => {
         const userId = parseInt(req.user.id);
         const postId = parseInt(req.params.id);
         const { title, content } = req.body;
+        const thumbnail = req.body.thumbnail ?? undefined;
+
 
         const existingPost = await prisma.post.findUnique({
             where: { id: postId },
@@ -68,7 +72,7 @@ exports.editPost = async (req, res) => {
 
         const updatedPost = await prisma.post.update({
             where: { id: postId },
-            data: { title, content },
+            data: { title, content, thumbnail },
         });
 
         res.json({
