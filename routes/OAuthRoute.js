@@ -72,10 +72,10 @@ oAuth.get("/google/callback", async (req, res) => {
     return res.redirect(process.env.CLIENT_URL);
   } catch (err) {
     if (req.query.error === 'access_denied') {
-      return res.redirect("http://localhost:5173/signin?error=google_failed");
+      return res.redirect(`${process.env.CLIENT_URL}/signin?error=google_failed`);
     }
       console.error("Google OAuth error:", err);
-      return res.redirect("http://localhost:5173/signin?error=google_failed");
+      return res.redirect(`${process.env.CLIENT_URL}/signin?error=google_failed`);
   }
 });
 
